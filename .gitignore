@@ -184,3 +184,6 @@ logs/*
 
 # User-specific files
 .vs
+
+# Test output
+output.mp4

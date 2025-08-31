@@ -3,6 +3,7 @@ import pygame
 import pymunk
 import pymunk.pygame_util
 from youtube import get_live_stream, get_new_live_chat_messages, get_live_chat_id, get_subscriber_count, validate_live_stream_id
+from streamer import Streamer
 from config import config
 from atlas import create_texture_atlas
 from pathlib import Path
@@ -16,6 +17,7 @@ import asyncio
 import threading
 import random
 from hud import Hud
+import os
 
 # Track key states
 key_t_pressed = False
@@ -146,24 +148,19 @@ asyncio_loop = asyncio.new_event_loop()
 threading.Thread(target=start_event_loop, args=(asyncio_loop,), daemon=True).start()
 
 def game():
-    window_width = int(INTERNAL_WIDTH / 2)
-    window_height = int(INTERNAL_HEIGHT / 2)
-
+    # Set a dummy audio driver to avoid audio-related errors in a headless environment
+    os.environ['SDL_AUDIODRIVER'] = 'dummy'
     # Initialize pygame
     pygame.init()
+    pygame.display.set_mode((1, 1), pygame.NOFRAME)
     clock = pygame.time.Clock()
 
     # Pymunk physics
     space = pymunk.Space()
     space.gravity = (0, 1000)  # (x, y) - down is positive y
 
-    # Create a resizable window
-    screen_size = (window_width, window_height)
-    screen = pygame.display.set_mode(screen_size, pygame.RESIZABLE)
-    pygame.display.set_caption("Falling Pickaxe")
-    # set icon
-    icon = pygame.image.load(Path(__file__).parent.parent / "src/assets/pickaxe" / "diamond_pickaxe.png")
-    pygame.display.set_icon(icon)
+    # Create a streamer instance
+    streamer = Streamer()
 
     # Create an internal surface with fixed resolution
     internal_surface = pygame.Surface((INTERNAL_WIDTH, INTERNAL_HEIGHT))
@@ -248,24 +245,12 @@ def game():
 
     # Main loop
     running = True
-    user_quit = False
     while running:
+        # In a headless environment, we don't have a window to close.
+        # The stream will run until the process is terminated.
+
         # ++++++++++++++++++  EVENTS ++++++++++++++++++
-        for event in pygame.event.get():
-            if event.type == pygame.QUIT:  # Close window event
-                running = False
-                user_quit = True
-            elif event.type == pygame.VIDEORESIZE:  # Window resize event
-                new_width, new_height = event.w, event.h
-
-                # Maintain 9:16 aspect ratio
-                if new_width / 9 > new_height / 16:
-                    new_width = int(new_height * (9 / 16))
-                else:
-                    new_height = int(new_width * (16 / 9))
-
-                window_width, window_height = new_width, new_height
-                screen = pygame.display.set_mode((window_width, window_height), pygame.RESIZABLE)
+        # We don't process pygame events because there is no window or user input.
 
         # ++++++++++++++++++  UPDATE ++++++++++++++++++
         # Determine which chunks are visible
@@ -289,9 +274,6 @@ def game():
         camera.update(pickaxe.body.position.y)
 
         # ++++++++++++++++++  DRAWING ++++++++++++++++++
-        # Clear the internal surface
-        screen.fill((0, 0, 0))
-
         # Fill internal surface with the background
         internal_surface.blit(background_image, ((INTERNAL_WIDTH - background_width) // 2, (INTERNAL_HEIGHT - background_height) // 2))
 
@@ -434,9 +416,8 @@ def game():
         # Draw HUD
         hud.draw(internal_surface, pickaxe.body.position.y, fast_slow_active, fast_slow)
 
-        # Scale internal surface to fit the resized window
-        scaled_surface = pygame.transform.smoothscale(internal_surface, (window_width, window_height))
-        screen.blit(scaled_surface, (0, 0))
+        # Write the frame to the streamer
+        streamer.write_frame(internal_surface)
 
         # Save progress
         if current_time - last_save_progress >= save_progress_interval:
@@ -458,48 +439,14 @@ def game():
                 f.write(f"diamond: {hud.amounts['diamond']} ")
                 f.write(f"emerald: {hud.amounts['emerald']} \n")
 
-        # Update the display
-        pygame.display.flip()
+        # Update the display (no-op in headless mode, but we still need to tick the clock)
         clock.tick(FRAMERATE)  # Cap the frame rate
 
-        # Inside the main loop
-        keys = pygame.key.get_pressed()
-
-        # Handle TNT spawn (key T)
-        if keys[pygame.K_t]:
-            if not key_t_pressed:  # Only spawn if the key was not pressed in the previous frame
-                new_tnt = Tnt(space, pickaxe.body.position.x, pickaxe.body.position.y - 100,
-                            texture_atlas, atlas_items, sound_manager)
-                tnt_list.append(new_tnt)
-                last_tnt_spawn = current_time
-                # New random interval for the next TNT spawn
-                tnt_spawn_interval = 1000 * random.uniform(config["TNT_SPAWN_INTERVAL_SECONDS_MIN"], config["TNT_SPAWN_INTERVAL_SECONDS_MAX"])
-            key_t_pressed = True
-        else:
-            key_t_pressed = False  # Reset the flag when the key is released
-
-        # Handle MegaTNT spawn (key M)
-        if keys[pygame.K_m]:
-            if not key_m_pressed:  # Only spawn if the key was not pressed in the previous frame
-                new_megatnt = MegaTnt(space, pickaxe.body.position.x, pickaxe.body.position.y - 100,
-                                    texture_atlas, atlas_items, sound_manager)
-                tnt_list.append(new_megatnt)
-                last_tnt_spawn = current_time
-                # New random interval for the next TNT spawn
-                tnt_spawn_interval = 1000 * random.uniform(config["TNT_SPAWN_INTERVAL_SECONDS_MIN"], config["TNT_SPAWN_INTERVAL_SECONDS_MAX"])
-            key_m_pressed = True
-        else:
-            key_m_pressed = False  # Reset the flag when the key is released
-
-    # Quit pygame properly
+    # Clean up
+    print("Closing streamer...")
+    streamer.close()
+    print("Quitting pygame...")
     pygame.quit()
-
-    # Return exit code: 0 for user quit (close window), 1 for crash/error
-    if user_quit:
-        import sys
-        sys.exit(0)  # Normal exit - user closed window
-    else:
-        import sys
-        sys.exit(1)  # Abnormal exit - game crashed or error
+    print("Exiting.")
 
 game()
