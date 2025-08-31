@@ -18,8 +18,10 @@ class Streamer:
             '-s', f'{INTERNAL_WIDTH}x{INTERNAL_HEIGHT}',
             '-r', str(FRAMERATE),
             '-i', '-',  # Video input from stdin
-            '-f', 'lavfi',
-            '-i', 'anullsrc=channel_layout=stereo:sample_rate=44100', # Silent audio input
+            '-f', 's16le', # Raw audio format
+            '-ar', '44100', # Sample rate
+            '-ac', '2', # Stereo channels
+            '-i', 'sdlaudio.raw', # Audio input file
             '-c:v', 'libx264',
             '-c:a', 'aac', # Audio codec
             '-shortest', # Finish encoding when the shortest input stream ends

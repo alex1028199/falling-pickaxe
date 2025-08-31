@@ -48,6 +48,11 @@ class Hud:
 
         # Initialize a font (using the default font and size 24)
         self.font = pygame.font.Font(None, 64)
+        self.command_list = [
+            "tnt", "fast", "slow", "big", "wood", "stone",
+            "iron", "gold", "diamond", "netherite"
+        ]
+        self.command_font = pygame.font.Font(None, 48)
 
     def update_amounts(self, new_amounts):
         """
@@ -56,7 +61,7 @@ class Hud:
         """
         self.amounts.update(new_amounts)
 
-    def draw(self, screen, pickaxe_y, fast_slow_active, fast_slow, last_command=""):
+    def draw(self, screen, pickaxe_y, fast_slow_active, fast_slow):
         """
         Draws the HUD: each ore icon with its amount and other indicators.
         """
@@ -105,12 +110,17 @@ class Hud:
         fast_slow_y = y + 2 * self.spacing + fast_slow_surface.get_height()
         screen.blit(fast_slow_surface, (fast_slow_x, fast_slow_y))
 
-        # Draw the last command with outlined text
-        if last_command:
-            command_text = f"CMD: {last_command}"
-            command_surface = render_text_with_outline(command_text, self.font, (255, 255, 0), (0, 0, 0), outline_width=2)
-            command_x = x + self.spacing
-            command_y = fast_slow_y + self.spacing + command_surface.get_height()
+        # Draw the command list on the right side
+        command_x = screen.get_width() - 300 # Adjust x position as needed
+        command_y = 50 # Adjust y position as needed
+
+        title_surface = render_text_with_outline("Commands", self.font, (255, 255, 255), (0, 0, 0), outline_width=2)
+        screen.blit(title_surface, (command_x, command_y))
+        command_y += title_surface.get_height() + self.spacing
+
+        for command in self.command_list:
+            command_surface = render_text_with_outline(command, self.command_font, (255, 255, 255), (0, 0, 0), outline_width=2)
             screen.blit(command_surface, (command_x, command_y))
+            command_y += command_surface.get_height() + self.spacing / 2
 
             

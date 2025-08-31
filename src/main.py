@@ -5,6 +5,7 @@ import pymunk.pygame_util
 from youtube import get_live_stream, get_new_live_chat_messages, get_live_chat_id, get_subscriber_count, validate_live_stream_id
 from streamer import Streamer
 from config import config
+from pfp import get_pfp
 from atlas import create_texture_atlas
 from pathlib import Path
 from chunk import get_block, clean_chunks, delete_block, chunks
@@ -20,7 +21,6 @@ from hud import Hud
 import os
 
 game_running = True
-last_command = ""
 
 # Track key states
 key_t_pressed = False
@@ -91,14 +91,14 @@ async def handle_youtube_poll():
 
         # Check for "tnt" command (add author to regular tnt_queue) - Only English "tnt"
         if "tnt" in text_lower:
-            if author not in tnt_queue:
-                tnt_queue.append(author)
+            if not any(msg['author'] == author for msg in tnt_queue):
+                tnt_queue.append(message)
                 print(f"Added {author} to regular TNT queue")
 
         # Check for Superchat/Supersticker (add to superchat tnt queue)
         if is_superchat or is_supersticker:
-            if author not in [entry[0] for entry in tnt_superchat_queue]:
-                 tnt_superchat_queue.append((author, text))
+            if not any(msg['author'] == author for msg in tnt_superchat_queue):
+                 tnt_superchat_queue.append(message)
                  print(f"Added {author} to Superchat TNT queue")
 
         if "fast" in text.lower() and author not in [entry[0] for entry in fast_slow_queue]:
@@ -151,12 +151,21 @@ asyncio_loop = asyncio.new_event_loop()
 threading.Thread(target=start_event_loop, args=(asyncio_loop,), daemon=True).start()
 
 def game():
-    # Set a dummy audio driver to avoid audio-related errors in a headless environment
-    os.environ['SDL_AUDIODRIVER'] = 'dummy'
+    # Set the audio driver to disk to capture audio output
+    os.environ['SDL_AUDIODRIVER'] = 'disk'
+    os.environ['SDL_AUDIO_DISK_FILE'] = 'sdlaudio.raw'
     # Initialize pygame
     pygame.init()
     pygame.display.set_mode((1, 1), pygame.NOFRAME)
     clock = pygame.time.Clock()
+
+    # Background music
+    if config.get("BACKGROUND_MUSIC"):
+        try:
+            pygame.mixer.music.load(config["BACKGROUND_MUSIC"])
+            pygame.mixer.music.play(-1) # -1 plays on a loop
+        except pygame.error as e:
+            print(f"Could not load or play background music: {e}")
 
     # Pymunk physics
     space = pymunk.Space()
@@ -333,10 +342,12 @@ def game():
 
             # Handle regular TNT from chat command
             if tnt_queue:
-                author = tnt_queue.pop(0)
+                message = tnt_queue.pop(0)
+                author = message['author']
+                pfp_path = get_pfp(message['channel_id'], message['pfp_url'])
                 print(f"Spawning regular TNT for {author} (from chat command)")
                 new_tnt = Tnt(space, pickaxe.body.position.x, pickaxe.body.position.y - 100,
-                             texture_atlas, atlas_items, sound_manager, owner_name=author)
+                             texture_atlas, atlas_items, sound_manager, owner_name=author, pfp_path=pfp_path)
                 tnt_list.append(new_tnt)
                 last_tnt_spawn = current_time
 
@@ -351,11 +362,14 @@ def game():
 
             # Handle Superchat/Supersticker TNT
             if tnt_superchat_queue:
-                author, text = tnt_superchat_queue.pop(0)
+                message = tnt_superchat_queue.pop(0)
+                author = message['author']
+                text = message['message']
+                pfp_path = get_pfp(message['channel_id'], message['pfp_url'])
                 print(f"Spawning TNT for {author} (Superchat: {text})")
                 last_tnt_spawn = current_time
                 for _ in range(config["TNT_AMOUNT_ON_SUPERCHAT"]):
-                    new_tnt = Tnt(space, pickaxe.body.position.x, pickaxe.body.position.y - 100, texture_atlas, atlas_items, sound_manager, owner_name=author)
+                    new_tnt = Tnt(space, pickaxe.body.position.x, pickaxe.body.position.y - 100, texture_atlas, atlas_items, sound_manager, owner_name=author, pfp_path=pfp_path)
                     tnt_list.append(new_tnt)
 
             # Handle Fast/Slow command
@@ -416,7 +430,7 @@ def game():
         explosions = [e for e in explosions if e.particles]
 
         # Draw HUD
-        hud.draw(internal_surface, pickaxe.body.position.y, fast_slow_active, fast_slow, last_command)
+        hud.draw(internal_surface, pickaxe.body.position.y, fast_slow_active, fast_slow)
 
         # Write the frame to the streamer
         streamer.write_frame(internal_surface)
@@ -449,6 +463,8 @@ def game():
     streamer.close()
     print("Quitting pygame...")
     pygame.quit()
+    if os.path.exists("sdlaudio.raw"):
+        os.remove("sdlaudio.raw")
     print("Exiting.")
 
 if __name__ == "__main__":

@@ -3,6 +3,16 @@ import time
 import random
 import main
 
+mock_message = {
+    "timestamp": "2024-01-01 12:00:00",
+    "author": "test_user",
+    "message": "tnt",
+    "sc_details": None,
+    "ss_details": None,
+    "channel_id": "test_channel_id",
+    "pfp_url": "https://yt3.ggpht.com/ytc/AAUvwni-JyA8sT5r-p_Yda1Z-p_y_T6z_X_Jz_Z-p=s88-c-k-c0x00ffffff-no-rj"
+}
+
 def run_game():
     main.game()
 
@@ -24,10 +34,9 @@ def test_game():
     while time.time() - start_time < 120:
         command = random.choice(commands)
         author = "test_user"
-        main.last_command = command
 
         if command == "tnt":
-            main.tnt_queue.append(author)
+            main.tnt_queue.append(mock_message)
         elif command == "fast":
             main.fast_slow_queue.append((author, "Fast"))
         elif command == "slow":

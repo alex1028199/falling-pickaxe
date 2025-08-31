@@ -144,7 +144,9 @@ def get_new_live_chat_messages(live_chat_id):
                 "author": author,
                 "message": message,
                 "sc_details": item["snippet"].get("superChatDetails", None),
-                "ss_details": item["snippet"].get("superStickerDetails", None)
+                "ss_details": item["snippet"].get("superStickerDetails", None),
+                "channel_id": item["authorDetails"]["channelId"],
+                "pfp_url": item["authorDetails"]["profileImageUrl"]
             })
 
     return messages

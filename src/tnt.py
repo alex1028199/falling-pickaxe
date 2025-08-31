@@ -7,12 +7,12 @@ from chunk import chunks
 from explosion import Explosion
 
 class Tnt:
-    def __init__(self, space, x, y, texture_atlas, atlas_items, sound_manager, owner_name=None, velocity=0, rotation=0, mass=70):
+    def __init__(self, space, x, y, texture_atlas, atlas_items, sound_manager, owner_name=None, pfp_path=None, velocity=0, rotation=0, mass=70):
         print("Spawning TNT")
         self.texture_atlas = texture_atlas
         self.atlas_items = atlas_items
 
-        rect = atlas_items["block"]["tnt"]  
+        rect = atlas_items["block"]["tnt"]
         self.texture = texture_atlas.subsurface(rect)
 
         width, height = self.texture.get_size()
@@ -49,6 +49,13 @@ class Tnt:
         # Owner name (nick from chat)
         self.owner_name = owner_name
         self.font = pygame.font.Font(None, 70)
+        self.pfp_image = None
+        if pfp_path:
+            try:
+                self.pfp_image = pygame.image.load(pfp_path)
+                self.pfp_image = pygame.transform.scale(self.pfp_image, (50, 50))
+            except pygame.error as e:
+                print(f"Could not load profile picture: {e}")
 
     def on_collision(self, arbiter, space, data):
         # Small random rotation on collision
@@ -117,8 +124,12 @@ class Tnt:
         overlay_rect.x -= camera.offset_x
         screen.blit(rotated_overlay, overlay_rect)
 
-        # Draw owner name above TNT
+        # Draw owner name and pfp above TNT
         if self.owner_name:
+            if self.pfp_image:
+                pfp_rect = self.pfp_image.get_rect(center=(self.body.position.x - camera.offset_x - 50, self.body.position.y - 55 - camera.offset_y))
+                screen.blit(self.pfp_image, pfp_rect)
+
             text_surface = self.font.render(self.owner_name, True, (255, 255, 255))
             text_rect = text_surface.get_rect(center=(self.body.position.x - camera.offset_x, self.body.position.y - 55 - camera.offset_y))
             shadow = self.font.render(self.owner_name, True, (0, 0, 0))
