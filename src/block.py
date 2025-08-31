@@ -77,6 +77,7 @@ class Block:
         self.shape.block_ref = self  # Reference to the block object
 
         self.destroyed = False
+        self.hit_count = 0
 
         self.name = name
 

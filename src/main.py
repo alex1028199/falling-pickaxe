@@ -1,3 +1,6 @@
+import os
+os.environ['SDL_AUDIODRIVER'] = 'disk'
+os.environ['SDL_AUDIO_DISK_FILE'] = 'sdlaudio.raw'
 import time
 import pygame
 import pymunk
@@ -151,9 +154,6 @@ asyncio_loop = asyncio.new_event_loop()
 threading.Thread(target=start_event_loop, args=(asyncio_loop,), daemon=True).start()
 
 def game():
-    # Set the audio driver to disk to capture audio output
-    os.environ['SDL_AUDIODRIVER'] = 'disk'
-    os.environ['SDL_AUDIO_DISK_FILE'] = 'sdlaudio.raw'
     # Initialize pygame
     pygame.init()
     pygame.display.set_mode((1, 1), pygame.NOFRAME)

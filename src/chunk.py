@@ -59,7 +59,7 @@ block_weights = {
 # Generate noise ranges
 noise_ranges = generate_noise_ranges(block_weights)
 
-def generate_first_chunk(texture_atlas, atlas_items, space): 
+def generate_first_chunk(texture_atlas, atlas_items, space):
     chunk = []
     for y in range(CHUNK_HEIGHT):
         row = []

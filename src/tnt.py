@@ -79,7 +79,7 @@ class Tnt:
                         damage = int(100 * (1 - (distance / explosion_radius)))
                         block.hp -= damage
 
-        explosion = Explosion(self.body.position, self.texture_atlas, self.atlas_items, particle_count=20)
+        explosion = Explosion(self.body.position, self.texture_atlas, self.atlas_items, particle_count=50)
         explosions.append(explosion)
 
     def update(self, tnt_list, explosions, camera):
@@ -126,14 +126,15 @@ class Tnt:
 
         # Draw owner name and pfp above TNT
         if self.owner_name:
+            text_surface = self.font.render(self.owner_name, True, (255, 255, 255))
+            text_rect = text_surface.get_rect(center=(self.body.position.x - camera.offset_x, self.body.position.y - 80 - camera.offset_y))
+
             if self.pfp_image:
-                pfp_rect = self.pfp_image.get_rect(center=(self.body.position.x - camera.offset_x - 50, self.body.position.y - 55 - camera.offset_y))
+                pfp_rect = self.pfp_image.get_rect(center=(text_rect.left - 30, text_rect.centery))
                 screen.blit(self.pfp_image, pfp_rect)
 
-            text_surface = self.font.render(self.owner_name, True, (255, 255, 255))
-            text_rect = text_surface.get_rect(center=(self.body.position.x - camera.offset_x, self.body.position.y - 55 - camera.offset_y))
             shadow = self.font.render(self.owner_name, True, (0, 0, 0))
-            shadow_rect = shadow.get_rect(center=(self.body.position.x + 1 - camera.offset_x, self.body.position.y - 54 - camera.offset_y))
+            shadow_rect = shadow.get_rect(center=(text_rect.centerx + 1, text_rect.centery + 1))
             screen.blit(shadow, shadow_rect)
             screen.blit(text_surface, text_rect)
 

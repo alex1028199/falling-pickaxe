@@ -12,16 +12,22 @@ class Streamer:
         command = [
             'ffmpeg',
             '-y',  # Overwrite output file if it exists
+            # Video input
             '-f', 'rawvideo',
             '-vcodec', 'rawvideo',
             '-pix_fmt', 'rgb24',
             '-s', f'{INTERNAL_WIDTH}x{INTERNAL_HEIGHT}',
             '-r', str(FRAMERATE),
             '-i', '-',  # Video input from stdin
+            # Audio input
             '-f', 's16le', # Raw audio format
             '-ar', '44100', # Sample rate
             '-ac', '2', # Stereo channels
             '-i', 'sdlaudio.raw', # Audio input file
+            # Sync options
+            '-async', '1',
+            '-vsync', 'cfr',
+            # Output options
             '-c:v', 'libx264',
             '-c:a', 'aac', # Audio codec
             '-shortest', # Finish encoding when the shortest input stream ends
