@@ -186,4 +186,4 @@ logs/*
 .vs
 
 # Test output
-output.mp4
+*.mp4

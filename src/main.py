@@ -19,6 +19,9 @@ import random
 from hud import Hud
 import os
 
+game_running = True
+last_command = ""
+
 # Track key states
 key_t_pressed = False
 key_m_pressed = False
@@ -244,8 +247,7 @@ def game():
     last_queues_pop = pygame.time.get_ticks()
 
     # Main loop
-    running = True
-    while running:
+    while game_running:
         # In a headless environment, we don't have a window to close.
         # The stream will run until the process is terminated.
 
@@ -414,7 +416,7 @@ def game():
         explosions = [e for e in explosions if e.particles]
 
         # Draw HUD
-        hud.draw(internal_surface, pickaxe.body.position.y, fast_slow_active, fast_slow)
+        hud.draw(internal_surface, pickaxe.body.position.y, fast_slow_active, fast_slow, last_command)
 
         # Write the frame to the streamer
         streamer.write_frame(internal_surface)
@@ -449,4 +451,5 @@ def game():
     pygame.quit()
     print("Exiting.")
 
-game()
+if __name__ == "__main__":
+    game()

@@ -56,7 +56,7 @@ class Hud:
         """
         self.amounts.update(new_amounts)
 
-    def draw(self, screen, pickaxe_y, fast_slow_active, fast_slow):
+    def draw(self, screen, pickaxe_y, fast_slow_active, fast_slow, last_command=""):
         """
         Draws the HUD: each ore icon with its amount and other indicators.
         """
@@ -105,5 +105,12 @@ class Hud:
         fast_slow_y = y + 2 * self.spacing + fast_slow_surface.get_height()
         screen.blit(fast_slow_surface, (fast_slow_x, fast_slow_y))
 
-            
+        # Draw the last command with outlined text
+        if last_command:
+            command_text = f"CMD: {last_command}"
+            command_surface = render_text_with_outline(command_text, self.font, (255, 255, 0), (0, 0, 0), outline_width=2)
+            command_x = x + self.spacing
+            command_y = fast_slow_y + self.spacing + command_surface.get_height()
+            screen.blit(command_surface, (command_x, command_y))
 
+            

@@ -17,11 +17,15 @@ class Streamer:
             '-pix_fmt', 'rgb24',
             '-s', f'{INTERNAL_WIDTH}x{INTERNAL_HEIGHT}',
             '-r', str(FRAMERATE),
-            '-i', '-',  # Input from stdin
+            '-i', '-',  # Video input from stdin
+            '-f', 'lavfi',
+            '-i', 'anullsrc=channel_layout=stereo:sample_rate=44100', # Silent audio input
             '-c:v', 'libx264',
+            '-c:a', 'aac', # Audio codec
+            '-shortest', # Finish encoding when the shortest input stream ends
             '-pix_fmt', 'yuv420p',
             '-preset', 'ultrafast',
-            '-f', 'mp4' if self.stream_url == "output.mp4" else "flv",
+            '-f', 'mp4' if self.stream_url.endswith(".mp4") else "flv",
             self.stream_url
         ]
 
