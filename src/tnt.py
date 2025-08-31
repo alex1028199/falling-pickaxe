@@ -36,7 +36,6 @@ class Tnt:
         self.shape.block_ref = self  # Reference to the block object
 
         self.sound_manager = sound_manager
-        self.sound_manager.play_sound("tnt")
 
         self.space.add(self.body, self.shape)
 

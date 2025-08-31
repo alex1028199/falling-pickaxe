@@ -49,7 +49,7 @@ class Hud:
         # Initialize a font (using the default font and size 24)
         self.font = pygame.font.Font(None, 64)
         self.command_list = [
-            "tnt", "fast", "slow", "big", "wood", "stone",
+            "tnt", "mega_tnt", "fast", "slow", "big", "wood", "stone",
             "iron", "gold", "diamond", "netherite"
         ]
         self.command_font = pygame.font.Font(None, 48)

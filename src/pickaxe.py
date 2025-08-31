@@ -94,15 +94,6 @@ class Pickaxe:
         block.hp -= self.damage  # Reduce HP when hit
         block.hit_count += 1
 
-        sound_name = ""
-        if block.name == "grass_block" or block.name == "dirt":
-            sound_name = "grass"
-        else:
-            sound_name = "stone"
-
-        sound_number = min(block.hit_count, 4)
-        self.sound_manager.play_sound(f"{sound_name}{sound_number}")
-
         # Add small random rotation on hit
         self.body.angle += random.choice([0.01, -0.01])
 

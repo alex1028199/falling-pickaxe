@@ -92,6 +92,11 @@ async def handle_youtube_poll():
 
         text_lower = text.lower()
 
+        if "mega_tnt" in text_lower:
+            if not any(msg['author'] == author for msg in mega_tnt_queue):
+                mega_tnt_queue.append(message)
+                print(f"Added {author} to MegaTNT queue")
+
         # Check for "tnt" command (add author to regular tnt_queue) - Only English "tnt"
         if "tnt" in text_lower:
             if not any(msg['author'] == author for msg in tnt_queue):
@@ -200,16 +205,6 @@ def game():
 
     #sounds
     sound_manager = SoundManager()
-
-    sound_manager.load_sound("tnt", assets_dir / "sounds" / "tnt.mp3", 0.3)
-    sound_manager.load_sound("stone1", assets_dir / "sounds" / "stone1.wav", 0.5)
-    sound_manager.load_sound("stone2", assets_dir / "sounds" / "stone2.wav", 0.5)
-    sound_manager.load_sound("stone3", assets_dir / "sounds" / "stone3.wav", 0.5)
-    sound_manager.load_sound("stone4", assets_dir / "sounds" / "stone4.wav", 0.5)
-    sound_manager.load_sound("grass1", assets_dir / "sounds" / "grass1.wav", 0.1)
-    sound_manager.load_sound("grass2", assets_dir / "sounds" / "grass2.wav", 0.1)
-    sound_manager.load_sound("grass3", assets_dir / "sounds" / "grass3.wav", 0.1)
-    sound_manager.load_sound("grass4", assets_dir / "sounds" / "grass4.wav", 0.1)
 
     # Pickaxe
     pickaxe = Pickaxe(space, INTERNAL_WIDTH // 2, INTERNAL_HEIGHT // 2, texture_atlas.subsurface(atlas_items["pickaxe"]["wooden_pickaxe"]), sound_manager)
@@ -351,10 +346,16 @@ def game():
                 tnt_list.append(new_tnt)
                 last_tnt_spawn = current_time
 
-            # Handle MegaTNT (New Subscriber)
+            # Handle MegaTNT
             if mega_tnt_queue:
-                author = mega_tnt_queue.pop(0)
-                print(f"Spawning MegaTNT for {author} (New Subscriber)")
+                message = mega_tnt_queue.pop(0)
+                # The message can be a string "New Subscriber" or a message object
+                if isinstance(message, str):
+                    author = message
+                else:
+                    author = message['author']
+
+                print(f"Spawning MegaTNT for {author}")
                 new_megatnt = MegaTnt(space, pickaxe.body.position.x, pickaxe.body.position.y - 100,
                       texture_atlas, atlas_items, sound_manager, owner_name=author)
                 tnt_list.append(new_megatnt)
